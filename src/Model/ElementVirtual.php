@@ -3,6 +3,7 @@
 namespace DNADesign\ElementalVirtual\Model;
 
 use DNADesign\Elemental\Models\BaseElement;
+use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\TagField\TagField;
@@ -78,19 +79,6 @@ class ElementVirtual extends BaseElement
                 );
             }
 
-            $availableBlocks = BaseElement::get()
-                ->filter('AvailableGlobally', 1)
-                ->exclude('ClassName', ElementVirtual::class);
-
-            $fields->replaceField(
-                'LinkedElementID',
-                TagField::create("LinkedElementID", $this->fieldLabel('LinkedElement'), $availableBlocks)
-                    ->setIsMultiple(false)
-                    ->setCanCreate(false)
-                    ->setShouldLazyLoad(true)
-                    ->setTitleField($this->config()->get('linkable_title_field'))
-            );
-
             if ($this->LinkedElementID) {
                 $message = sprintf(
                     '<p>%s</p><p><a href="%2$s" target="_blank">Click here to edit the original</a></p>',
@@ -102,7 +90,15 @@ class ElementVirtual extends BaseElement
             }
         });
 
-        return parent::getCMSFields();
+        $fields = parent::getCMSFields();
+        $myField = $fields->dataFieldByName('LinkedElementID');
+        $availableBlocks = BaseElement::get()
+            ->filter('AvailableGlobally', 1)
+            ->sort(['VirtualLookupTitle' => 'ASC'])
+            ->exclude('ClassName', ElementVirtual::class)
+            ->map('ID', 'VirtualLookupTitle');
+        $myField->setSource($availableBlocks);
+        return $fields;
     }
 
     /**
