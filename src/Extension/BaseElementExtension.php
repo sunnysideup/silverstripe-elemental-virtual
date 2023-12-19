@@ -120,12 +120,12 @@ class BaseElementExtension extends DataExtension
      */
     public function getVirtualLinkedSummary()
     {
-        $summary = sprintf(
+        $summary = Convert::raw2sql(sprintf(
             '%s (%s - used on %s)',
-            Convert::raw2sql($this->owner->Title),
+            $this->owner->getTitle(),
             $this->owner->getType(),
             $this->owner->getPage()?->Title ?: 'ERROR'
-        );
+        ));
 
         $this->owner->invokeWithExtensions('updateVirtualLinkedSummary', $summary);
 

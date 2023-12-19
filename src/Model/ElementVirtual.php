@@ -91,13 +91,21 @@ class ElementVirtual extends BaseElement
         });
 
         $fields = parent::getCMSFields();
-        $myField = $fields->dataFieldByName('LinkedElementID');
-        $availableBlocks = BaseElement::get()
-            ->filter('AvailableGlobally', 1)
-            ->sort(['VirtualLookupTitle' => 'ASC'])
-            ->exclude('ClassName', ElementVirtual::class)
-            ->map('ID', 'VirtualLookupTitle');
-        $myField->setSource($availableBlocks);
+
+        if($fields->dataFieldByName('LinkedElementID')) {
+            $fields->replaceField(
+                'LinkedElementID',
+                DropdownField::create(
+                    'LinkedElementID',
+                    _t(__CLASS__ . '.LinkedElement', 'Linked Element'),
+                    BaseElement::get()
+                        ->filter('AvailableGlobally', 1)
+                        ->sort(['VirtualLookupTitle' => 'ASC'])
+                        ->exclude(['ClassName' => ElementVirtual::class])
+                        ->map('ID', 'VirtualLookupTitle')
+                )
+            );
+        }
         return $fields;
     }
 
