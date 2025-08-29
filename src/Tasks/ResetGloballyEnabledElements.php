@@ -14,7 +14,7 @@ use Symfony\Component\Console\Input\InputOption;
 
 class ResetGloballyEnabledElements extends BuildTask
 {
-    protected static string $commandName = 'elemental:virtual:reset-globally-enabled';
+    protected static string $commandName = 'elemental-virtual-reset-globally-enabled';
 
     protected string $title = 'Reset Globally Enabled elements';
 
