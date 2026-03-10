@@ -3,6 +3,7 @@
 namespace DNADesign\ElementalVirtual\Extensions;
 
 use DNADesign\Elemental\Models\BaseElement;
+use SilverStripe\CMS\Model\RedirectorPageController;
 use SilverStripe\Core\Extension;
 
 class VirtualElementalContentControllerExtension extends Extension
@@ -27,6 +28,11 @@ class VirtualElementalContentControllerExtension extends Extension
 
         if ($element && $element->canView()) {
             $useElement = clone $element;
+
+            // Don't allow this to be used on a RedirectorPage
+            if ($this->owner instanceof RedirectorPageController) {
+                return null;
+            }
 
             // modify the element to appear on the correct 'Page' so that
             // any breadcrumbs and titles are correct.
