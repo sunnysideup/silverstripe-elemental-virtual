@@ -2,11 +2,11 @@
 
 namespace DNADesign\ElementalVirtual\Model;
 
+use Override;
 use DNADesign\Elemental\Models\BaseElement;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\LiteralField;
-use SilverStripe\TagField\TagField;
 
 /**
  * Virtual Linked Element.
@@ -56,6 +56,7 @@ class ElementVirtual extends BaseElement
         $this->LinkedElement()->setVirtualOwner($this);
     }
 
+    #[Override]
     public function getCMSFields()
     {
         $invalid = $this->isInvalidPublishState();
@@ -65,7 +66,7 @@ class ElementVirtual extends BaseElement
 
             if ($invalid) {
                 $warning = _t(
-                    __CLASS__ . '.InvalidPublishStateWarning',
+                    self::class . '.InvalidPublishStateWarning',
                     'Error: The original element is not published. This element will not work on the live site until ' .
                         'you click the link below and publish it.'
                 );
@@ -82,7 +83,7 @@ class ElementVirtual extends BaseElement
             if ($this->LinkedElementID) {
                 $message = sprintf(
                     '<p>%s</p><p><a href="%2$s" target="_blank">Click here to edit the original</a></p>',
-                    _t(__CLASS__ . '.VirtualDescription', 'This is a virtual copy of an element.'),
+                    _t(self::class . '.VirtualDescription', 'This is a virtual copy of an element.'),
                     $this->LinkedElement()->getEditLink()
                 );
 
@@ -92,31 +93,30 @@ class ElementVirtual extends BaseElement
 
         $fields = parent::getCMSFields();
 
-        if($fields->dataFieldByName('LinkedElementID')) {
+        if ($fields->dataFieldByName('LinkedElementID')) {
             $fields->replaceField(
                 'LinkedElementID',
                 DropdownField::create(
                     'LinkedElementID',
-                    _t(__CLASS__ . '.LinkedElement', 'Linked Element'),
-                    BaseElement::get()
-                        ->filter('AvailableGlobally', 1)
+                    _t(self::class . '.LinkedElement', 'Linked Element'),
+                    BaseElement::get()->filter(['AvailableGlobally' => 1])
                         ->sort(['VirtualLookupTitle' => 'ASC'])
                         ->exclude(['ClassName' => ElementVirtual::class])
                         ->map('ID', 'VirtualLookupTitle')
                 )
             );
         }
+
         return $fields;
     }
 
     /**
      * @return string
      */
+    #[Override]
     public function getType()
     {
-        return sprintf(
-            _t(__CLASS__ . '.BlockType', 'Virtual Block')
-        );
+        return _t(self::class . '.BlockType', 'Virtual Block');
     }
 
     /**
@@ -125,7 +125,7 @@ class ElementVirtual extends BaseElement
      *
      * @return boolean
      */
-    public function isInvalidPublishState()
+    public function isInvalidPublishState(): bool
     {
         $element = $this->LinkedElement();
 
@@ -137,7 +137,8 @@ class ElementVirtual extends BaseElement
      *
      * @return string
      */
-    public function getAnchor()
+    #[Override]
+    public function getAnchor(): string
     {
         $linkedElement = $this->LinkedElement();
 
@@ -151,7 +152,8 @@ class ElementVirtual extends BaseElement
     /**
      * @return string
      */
-    public function getSummary()
+    #[Override]
+    public function getSummary(): ?string
     {
         if ($linked = $this->LinkedElement()) {
             return $linked->getSummary();
@@ -161,7 +163,8 @@ class ElementVirtual extends BaseElement
     /**
      * @return string
      */
-    public function getTitle()
+    #[Override]
+    public function getTitle(): ?string
     {
         if ($linked = $this->LinkedElement()) {
             return $linked->Title;
@@ -171,15 +174,18 @@ class ElementVirtual extends BaseElement
     /**
      * Override to render template based on LinkedElement
      */
+    #[Override]
     public function forTemplate($holder = true): string
     {
         if ($linked = $this->LinkedElement()) {
             return $linked->forTemplate($holder);
         }
+
         return '';
     }
 
-    protected function provideBlockSchema()
+    #[Override]
+    protected function provideBlockSchema(): array
     {
         $blockSchema = parent::provideBlockSchema();
         $blockSchema['content'] = $this->getSummary();
