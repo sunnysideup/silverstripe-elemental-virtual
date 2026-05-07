@@ -101,19 +101,36 @@ class BaseElementExtension extends Extension
     public function getVirtualLinkedSummary()
     {
         $owner = $this->getOwner();
+
         $page = $owner->getPage();
-        $type = ($owner->getType());
+        $page = $page ?
+            _t(self::class . '.UsedOnPage', ' - used on {page}', ['page' => $page->Title]) :
+            self::not_in_use_string();
+
+        $title = trim($owner->getTitle() ?: self::no_title_string());
+
+        $type = trim($owner->getType());
+
         $summary = Convert::raw2sql(sprintf(
-            '%s%s (%s%s)',
-            $page ? '' : '~ [NOT IN USE]',
-            $owner->getTitle(),
+            '%s (%s%s)',
+            $title,
             $type,
-            $page ? ' - used on '.$page->Title : 'ERROR'
+            $page
         ));
 
         $owner->invokeWithExtensions('updateVirtualLinkedSummary', $summary);
 
         return $summary;
+    }
+
+    public static function not_in_use_string(): string
+    {
+        return _t(self::class . '.NotInUse', ' - not currently in use');
+    }
+
+    public static function no_title_string(): string
+    {
+        return _t(self::class . '.NoTitle', ' - no title');
     }
 
     /**

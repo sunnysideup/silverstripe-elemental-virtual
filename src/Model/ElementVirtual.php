@@ -4,9 +4,14 @@ namespace DNADesign\ElementalVirtual\Model;
 
 use Override;
 use DNADesign\Elemental\Models\BaseElement;
+use DNADesign\ElementalVirtual\Extensions\BaseElementExtension;
+use SilverStripe\Core\Convert;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\LiteralField;
+use SilverStripe\Forms\SearchableDropdownField;
+use SilverStripe\Model\List\Map;
+use SilverStripe\ORM\DataList;
 
 /**
  * Virtual Linked Element.
@@ -90,21 +95,25 @@ class ElementVirtual extends BaseElement
                 $fields->addFieldToTab('Root.Main', LiteralField::create('Existing', $message));
             }
         });
-
         $fields = parent::getCMSFields();
-
-        if ($fields->dataFieldByName('LinkedElementID')) {
-            $fields->replaceField(
-                'LinkedElementID',
-                DropdownField::create(
-                    'LinkedElementID',
-                    _t(self::class . '.LinkedElement', 'Linked Element'),
-                    BaseElement::get()->filter(['AvailableGlobally' => 1])
-                        ->sort(['VirtualLookupTitle' => 'ASC'])
-                        ->exclude(['ClassName' => ElementVirtual::class])
-                        ->map('ID', 'VirtualLookupTitle')
-                )
-            );
+        $field = $fields->dataFieldByName('LinkedElementID');
+        $list = BaseElement::get()->filter(['AvailableGlobally' => 1])
+                    ->sort(['VirtualLookupTitle' => 'ASC'])
+                    ->exclude(['ClassName' => ElementVirtual::class]);
+        $list = $this->sortDataListBetter(
+            $list,
+            'VirtualLookupTitle',
+            [
+                BaseElementExtension::not_in_use_string(),
+                BaseElementExtension::no_title_string()
+            ]
+        );
+        if ($field instanceof SearchableDropdownField) {
+            $field->setSource($list);
+        } elseif ($field instanceof DropdownField) {
+            $field
+                ->setSource($list->map('ID', 'VirtualLookupTitle')->toArray())
+                ->setEmptyString(_t(self::class . '.SelectElement', '-- Select an element --'));
         }
 
         return $fields;
@@ -191,4 +200,22 @@ class ElementVirtual extends BaseElement
         $blockSchema['content'] = $this->getSummary();
         return $blockSchema;
     }
+
+    protected function sortDataListBetter(DataList $list, string $column, array $stringsToDemote): DataList
+    {
+        if (empty($stringsToDemote)) {
+            return $list;
+        }
+
+        $cases = '';
+        foreach ($stringsToDemote as $index => $phrase) {
+            $escaped = Convert::raw2sql($phrase);
+            $cases .= "WHEN \"{$column}\" LIKE '%{$escaped}%' THEN {$index} ";
+        }
+
+        $demoteSQL = "CASE {$cases} ELSE -1 END";
+
+        return $list->orderBy($demoteSQL . ' ASC');
+    }
+
 }

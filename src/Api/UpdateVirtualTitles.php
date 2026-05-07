@@ -10,7 +10,7 @@ class UpdateVirtualTitles
     public static function update_virtual_titles()
     {
         $update = BaseElement::get()->filter([
-            'VirtualLookupTitle' => [null, ''],
+            // 'VirtualLookupTitle' => [null, ''],
             'AvailableGlobally' => 1
         ]);
 
