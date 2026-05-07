@@ -16,13 +16,13 @@ use SilverStripe\Forms\GridField\GridFieldDataColumns;
 use SilverStripe\Forms\GridField\GridFieldDetailForm;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\Forms\ReadonlyField;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Model\List\ArrayList;
+use SilverStripe\Core\Extension;
 use SilverStripe\ORM\DB;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\Versioned\Versioned;
 
-class BaseElementExtension extends DataExtension
+class BaseElementExtension extends Extension
 {
     /**
      * @config
@@ -54,7 +54,7 @@ class BaseElementExtension extends DataExtension
     }
 
 
-    public function requireDefaultRecords()
+    public function onRequireDefaultRecords(): void
     {
         $update = BaseElement::get()->filter([
             'VirtualLookupTitle' => [null, ''],
@@ -166,6 +166,12 @@ class BaseElementExtension extends DataExtension
             ]);
         }
 
+        if ($this->owner->config()->get('inline_editable')) {
+            $fields->removeByName('VirtualClones');
+
+            return;
+        }
+
         if ($virtual = $fields->dataFieldByName('VirtualClones')) {
             if ($this->owner->VirtualClones()->Count() > 0) {
                 $tab = $fields->findOrMakeTab('Root.VirtualClones');
@@ -173,7 +179,7 @@ class BaseElementExtension extends DataExtension
 
                 if ($ownerPage = $this->owner->getPage()) {
                     if ($ownerPage->hasMethod('CMSEditLink')) {
-                        $link = $ownerPage->canEdit() ? $ownerPage->CMSEditLink() : $ownerPage->Link();
+                        $link = $ownerPage->canEdit() ? $ownerPage->getCMSEditLink() : $ownerPage->Link();
                     } else {
                         $link = $ownerPage->Link();
                     }
@@ -243,6 +249,7 @@ class BaseElementExtension extends DataExtension
                 $firstVirtual = $this->getVirtualElements()->First();
                 $wasPublished = false;
             }
+
             if ($firstVirtual) {
                 $clone = $this->owner->duplicate(false);
 
@@ -251,9 +258,11 @@ class BaseElementExtension extends DataExtension
                 $clone->Sort = $firstVirtual->Sort;
 
                 $clone->write();
+
                 if ($wasPublished) {
-                    $clone->doPublish();
-                    $firstVirtual->doUnpublish();
+                    $clone->publishRecursive();
+
+                    $firstVirtual->doArchive();
                 }
 
                 // clone has a new ID, so need to repoint
@@ -262,14 +271,18 @@ class BaseElementExtension extends DataExtension
                     if ($virtual->ID == $firstVirtual->ID) {
                         continue;
                     }
+
                     $pub = false;
+
                     if ($virtual->isPublished()) {
                         $pub = true;
                     }
+
                     $virtual->LinkedElementID = $clone->ID;
                     $virtual->write();
+
                     if ($pub) {
-                        $virtual->doPublish();
+                        $virtual->publishRecursive();
                     }
                 }
 
@@ -331,7 +344,7 @@ class BaseElementExtension extends DataExtension
         $arr = [];
         foreach ($usage as $page) {
             $type = ($page->ElementType) ? sprintf("<em> - %s</em>", $page->ElementType) : null;
-            $arr[] = sprintf("<a href=\"%s\" target=\"blank\">%s</a> %s", $page->CMSEditLink(), $page->Title, $type);
+            $arr[] = sprintf("<a href=\"%s\" target=\"blank\">%s</a> %s", $page->getCMSEditLink(), $page->Title, $type);
         }
         $html = DBHTMLText::create('UsageSummary');
         $html->setValue(implode('<br>', $arr));
