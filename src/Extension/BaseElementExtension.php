@@ -120,12 +120,9 @@ class BaseElementExtension extends Extension
      */
     public function getVirtualLinkedSummary()
     {
-        $summary = sprintf(
-            '%s (%s #%s)',
-            Convert::raw2sql($this->owner->Title),
-            $this->owner->getType(),
-            $this->owner->ID
-        );
+        $title = trim((string) $this->owner->Title);
+        $titlePrefix = $title === '' ? '' : sprintf('%s ', Convert::raw2sql($title));
+        $summary = sprintf('%s(%s #%s)', $titlePrefix, $this->owner->getType(), $this->owner->ID);
 
         $this->owner->invokeWithExtensions('updateVirtualLinkedSummary', $summary);
 
