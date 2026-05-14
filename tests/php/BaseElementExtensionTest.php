@@ -67,4 +67,15 @@ class BaseElementExtensionTest extends SapphireTest
 
         $this->assertEquals(1, $list->count());
     }
+
+    public function testVirtualLinkedSummaryWithoutTitleHasNoLeadingWhitespace(): void
+    {
+        $linked = $this->objFromFixture(TestElement::class, 'element1');
+        $linked->Title = '';
+
+        $this->assertSame(
+            sprintf('(%s #%s)', $linked->getType(), $linked->ID),
+            $linked->getVirtualLinkedSummary()
+        );
+    }
 }
