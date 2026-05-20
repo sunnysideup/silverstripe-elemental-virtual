@@ -55,7 +55,7 @@ class ElementVirtualLinkedController extends ElementController
             $retVal = parent::__call($method, $arguments);
         } catch (Exception) {
             $controller = $this->LinkedElement()->getController();
-            $retVal = call_user_func_array([$controller, $method], $arguments);
+            $retVal = $controller->{$method}(...$arguments);
         }
 
         return $retVal;

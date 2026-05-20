@@ -3,8 +3,8 @@
 namespace DNADesign\ElementalVirtual\Extensions;
 
 use SilverStripe\Forms\FormField;
+use DNADesign\Elemental\Models\BaseElement;
 use DNADesign\Elemental\Models\ElementalArea;
-use DNADesign\ElementalVirtual\Api\UpdateVirtualTitles;
 use DNADesign\ElementalVirtual\Forms\ElementalGridFieldDeleteAction;
 use DNADesign\ElementalVirtual\Model\ElementVirtual;
 use SilverStripe\Core\Convert;
@@ -19,7 +19,7 @@ use SilverStripe\Forms\LiteralField;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Model\List\ArrayList;
 use SilverStripe\Core\Extension;
-use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DB;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\Versioned\Versioned;
 
@@ -36,7 +36,7 @@ class BaseElementExtension extends Extension
      * @var array
      */
     private static $db = [
-        'AvailableGlobally' => 'Boolean(1)',
+        'AvailableGlobally' => 'Boolean(0)',
         'VirtualLookupTitle' => 'Varchar(200)'
     ];
 
@@ -68,7 +68,7 @@ class BaseElementExtension extends Extension
      */
     public function setVirtualOwner(ElementVirtual $owner)
     {
-        $owner->setField('_virtualOwner', $owner);
+        $this->getOwner()->setField('_virtualOwner', $owner);
         return $this;
     }
 
